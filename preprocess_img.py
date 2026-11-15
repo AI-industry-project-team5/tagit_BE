@@ -31,4 +31,4 @@ def prepare_img(data: bytes, max_side: int = 1280) -> tuple[Image.Image, bytes]:
     detection.save(buffer, "JPEG", quality=95)
     return original, buffer.getvalue()
 
-# 분류용
+# 분류용 (추후 구현 예정)
