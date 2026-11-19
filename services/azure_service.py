@@ -1,6 +1,4 @@
 import os
-from functools import cached_property
-from math import isfinite
 from dotenv import load_dotenv
 from azure.cognitiveservices.vision.customvision.prediction import CustomVisionPredictionClient
 from msrest.authentication import ApiKeyCredentials
@@ -9,8 +7,10 @@ from azure.core.credentials import AzureKeyCredential
 
 load_dotenv()
 
-
+# 1. 메모 탐지 클래스 
 class AzureMemoDetector:
+    """Azure Custom Vision을 호출해 가장 확률이 높은 메모 1개의 Bounding Box값을 반환하는 클래스"""
+
     def __init__(self):
         # .env에 정의된 메모 탐지(Object Detection) 전용 환경변수 로드
         endpoint = os.getenv("AZURE_DETECTION_ENDPOINT")  
@@ -27,9 +27,10 @@ class AzureMemoDetector:
         credentials = ApiKeyCredentials(in_headers={"Prediction-key": prediction_key})
         self.predictor = CustomVisionPredictionClient(endpoint, credentials)
 
-    # 가장 확률이 높은 메모 1개의 Bounding Box값을 반환
     def get_boundingbox(self, image_bytes: bytes, threshold: float = 0.7) -> dict | None:
         """
+        전처리된 이미지를 받아 가장 신뢰도가 높은 메모 1개의 Bounding Box 정보를 반환합니다.
+
         Args:
             image_bytes: prepare_img()에서 반환된 탐지용 이미지 바이트
             threshold: 최소 신뢰도 임계값 (기본값 0.7)
