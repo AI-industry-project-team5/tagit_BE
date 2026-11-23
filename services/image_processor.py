@@ -11,6 +11,7 @@ class ImageInputError(ValueError):
         self.code = code
         self.status_code = status_code
 
+# 바이트 -> 텍스트
 def _text(value) -> str:
     if isinstance(value, bytes):
         value = value.decode("utf-8", errors="replace")
