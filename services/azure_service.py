@@ -5,6 +5,8 @@ from msrest.authentication import ApiKeyCredentials
 from azure.ai.vision.imageanalysis import ImageAnalysisClient
 from azure.core.credentials import AzureKeyCredential
 
+from .image_processor import prepare_img_with_metadata, crop_memo, encode_memo, low_quality
+
 load_dotenv()
 
 # 1. 메모 탐지 클래스 
@@ -157,3 +159,43 @@ class AzureMemoClassifier:
 memo_detector = AzureMemoDetector()
 ocr_service = AzureOcrService()
 memo_classifier = AzureMemoClassifier()
+
+# 메모 분석 함수
+def analyze_memo(image_bytes: bytes, *, progress = None,min_photo_side = 160, min_memo_side = 32, min_edge_variance = 4.0) -> dict:
+    if progress:
+        progress("DETECTION")
+    original, detection_bytes, metadata = prepare_img_with_metadata(image_bytes)
+    result = {"riskLevel": "HOLD", "probability": None, "reason": "LOW_QUALITY",
+              "overlayImageUrl": None}
+    analysis = {"status": "COMPLETED", "metadata": metadata, "boundingBox": None,
+                "ocrText": None, "ocrStatus": "SKIPPED", "result": result}
+    
+    if low_quality(original, min_photo_side, min_edge_variance):
+        return analysis
+    box = memo_detector.get_boundingbox(detection_bytes)
+    if box is None:
+        result["reason"] = "NO_MEMO"
+        return analysis
+    if min(box["width"] * original.width, box["height"] * original.height) < min_memo_side:
+        return analysis
+    if low_quality(crop_memo(original, box, padding=0), min_memo_side, min_edge_variance):
+        return analysis
+    
+    memo_bytes = encode_memo(crop_memo(original, box, padding=0.15))
+    if progress:
+        progress("CLASSIFICATION")
+    probability = memo_classifier.classify_memo(memo_bytes)
+    risk = "HIGH" if probability >= 0.7 else "MEDIUM" if probability >= 0.4 else "LOW"
+    result.update(riskLevel=risk, probability=probability, reason=None)
+    analysis["boundingBox"] = box
+
+    if progress:
+        progress("OCR")
+    try:
+        text = ocr_service.extract_text(memo_bytes).strip()
+    except Exception:
+        analysis["ocrStatus"] = "FAILED"
+    else:
+        analysis["ocrText"] = text or None
+        analysis["ocrStatus"] = "COMPLETED" if text else "NO_TEXT"
+    return analysis
