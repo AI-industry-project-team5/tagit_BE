@@ -182,13 +182,7 @@ def analyze_memo(image_bytes: bytes, *, progress = None,min_photo_side = 160, mi
         return analysis
     
     memo_bytes = encode_memo(crop_memo(original, box, padding=0.15))
-    if progress:
-        progress("CLASSIFICATION")
-    probability = memo_classifier.classify_memo(memo_bytes)
-    risk = "HIGH" if probability >= 0.7 else "MEDIUM" if probability >= 0.4 else "LOW"
-    result.update(riskLevel=risk, probability=probability, reason=None)
-    analysis["boundingBox"] = box
-
+    
     if progress:
         progress("OCR")
     try:
@@ -198,4 +192,12 @@ def analyze_memo(image_bytes: bytes, *, progress = None,min_photo_side = 160, mi
     else:
         analysis["ocrText"] = text or None
         analysis["ocrStatus"] = "COMPLETED" if text else "NO_TEXT"
+
+    if progress:
+        progress("CLASSIFICATION")
+    probability = memo_classifier.classify_memo(memo_bytes)
+    risk = "HIGH" if probability >= 0.7 else "MEDIUM" if probability >= 0.4 else "LOW"
+    result.update(riskLevel=risk, probability=probability, reason=None)
+    analysis["boundingBox"] = box
+
     return analysis
