@@ -177,7 +177,7 @@ def analyze_memo(image_bytes: bytes, *, progress = None,min_photo_side = 160, mi
     
     if low_quality(original, min_photo_side, min_edge_variance):
         return analysis
-    box = memo_detector.get_boundingbox(detection_bytes)
+    box, _ = memo_detector.get_boundingbox(detection_bytes)
     if box is None:
         result["reason"] = "NO_MEMO"
         return analysis
