@@ -132,6 +132,7 @@ def get_share(job_id: UUID, db: Connection, make_read_url: Callable[[str], str],
             "metadata": {
                 "device": metadata.get("device"),
                 "capturedAt": metadata.get("capturedAt"),
+                "software": metadata.get("software"),
                 "editStatus": edit_status,
             },
 

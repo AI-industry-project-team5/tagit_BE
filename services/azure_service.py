@@ -154,11 +154,11 @@ class AzureMemoClassifier:
 
         # 예측 결과 중 태그 이름이 'fake'인 것의 확률을 찾아 반환
         for pred in results.predictions:
-            if pred.tag_name.lower() == "fake":
+            if pred.tag_name.strip().lower() == "fake":
                 return pred.probability
 
         # 만약 'fake' 태그를 찾지 못한 경우 기본값 0.0 반환
-        return 0.0
+        raise RuntimeError("분류 모델에서 fake 태그를 찾을 수 없음")
 
 # 라우터에서 호출할 인스턴스
 memo_detector = AzureMemoDetector()
