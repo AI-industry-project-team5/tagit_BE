@@ -69,9 +69,9 @@ def extract_metadata(uploaded: Image.Image) -> dict:
     # 편집 기록 상태 결정
     status = "UNKNOWN"
     if editor:
-        status = "EDIT_RECORD_FOUND"
+        status = "EDITED"
     elif device or captured:
-        status = "NO_EDIT_RECORD_FOUND"
+        status = "NOT_EDITED"
 
     return {"device": device or None, "capturedAt": captured or None,
             "software": editor or next(iter(programs), None), "editStatus": status}

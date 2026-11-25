@@ -115,10 +115,10 @@ def get_share(job_id: UUID, db: Connection, make_read_url: Callable[[str], str],
     detail = job["analysis_detail"] or {}
     metadata = detail.get("metadata") or {}
 
-    # 편집 상태 - edited, not_edited, unknown
+    # 편집 상태 - EDITED, NOT_EDITED, UNKNOWN
     edit_status = (job["edit_status"] or "").strip().lower().replace(" ", "_")
-    if edit_status not in ("edited", "not_edited"):
-        edit_status = "unknown"
+    if edit_status not in ("EDITED", "NOT_EDITED"):
+        edit_status = "UNKNOWN"
 
     completed_at = job["completed_at"].astimezone(timezone.utc)
     probability = job["probability"]
@@ -132,6 +132,7 @@ def get_share(job_id: UUID, db: Connection, make_read_url: Callable[[str], str],
             "metadata": {
                 "device": metadata.get("device"),
                 "capturedAt": metadata.get("capturedAt"),
+                "software": metadata.get("software"),
                 "editStatus": edit_status,
             },
 
