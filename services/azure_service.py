@@ -29,7 +29,8 @@ class AzureMemoDetector:
         credentials = ApiKeyCredentials(in_headers={"Prediction-key": prediction_key})
         self.predictor = CustomVisionPredictionClient(endpoint, credentials)
 
-    def get_boundingbox(self, image_bytes: bytes, threshold: float = 0.7) -> dict | None:
+    def get_boundingbox(self, image_bytes: bytes, threshold: float = 0.7
+        ) -> tuple[dict[str, float], float] | tuple[None, None]:
         """
         전처리된 이미지를 받아 가장 신뢰도가 높은 메모 1개의 Bounding Box 정보를 반환합니다.
 
@@ -38,7 +39,9 @@ class AzureMemoDetector:
             threshold: 최소 신뢰도 임계값 (기본값 0.7)
 
         Returns:
-            dict | None: 탐지된 메모가 있으면 Bounding Box 딕셔너리, 기준치를 넘는 객체가 없으면 None
+            tuple[dict[str, float], float] | tuple[None, None]:
+                탐지된 메모가 있으면 (bounding_box_dict, probability) 튜플,
+                기준치를 넘는 객체가 없으면 (None, None)
         """
         # Custom Vision 모델을 호출하여 이미지 내 객체 탐지 수행
         results = self.predictor.detect_image(
@@ -54,18 +57,20 @@ class AzureMemoDetector:
 
         # 탐지된 메모가 하나도 없으면 None 반환
         if not valid_predictions:
-            return None
+            return None, None
 
         # 확률(probability)이 가장 높은 객체 1개 선택
         best_pred = max(valid_predictions, key=lambda p: p.probability)
         box = best_pred.bounding_box
 
-        return {
+        bbox = {
             "left": box.left,
             "top": box.top,
             "width": box.width,
-            "height": box.height
+            "height": box.height,
         }
+
+        return bbox, best_pred.probability
         
 # 2. OCR 클래스 
 class AzureOcrService:
