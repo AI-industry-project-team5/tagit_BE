@@ -39,6 +39,12 @@ def _xmp_fields(uploaded: Image.Image) -> dict:
 
 # 메타데이터 추출 및 편집 기록 확인
 def extract_metadata(uploaded: Image.Image) -> dict:
+    has_metadata = bool(
+    uploaded.info.get("exif")
+    or uploaded.info.get("xmp")
+    or uploaded.info.get("XML:com.adobe.xmp")
+)
+    
     try:
         exif = uploaded.getexif()
         make = _text(exif.get(271))
@@ -66,12 +72,17 @@ def extract_metadata(uploaded: Image.Image) -> dict:
     programs = list(filter(None, [software, *xmp.get("CreatorTool", []), *xmp.get("Software", [])]))
     editors = ("photoshop", "lightroom", "gimp", "snapseed", "affinity photo", "stable diffusion")
     editor = next((p for p in programs if any(name in p.casefold() for name in editors)), None)
+
     # 편집 기록 상태 결정
     status = "UNKNOWN"
     if editor:
         status = "EDITED"
     elif device or captured:
         status = "NOT_EDITED"
+    elif not has_metadata and not programs and not exif and not xmp:
+        status = "NO_METADATA"
+    else:
+        status = "UNKNOWN"
 
     return {"device": device or None, "capturedAt": captured or None,
             "software": editor or next(iter(programs), None), "editStatus": status}

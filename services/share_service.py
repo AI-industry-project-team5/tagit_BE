@@ -115,14 +115,14 @@ def get_share(job_id: UUID, db: Connection, make_read_url: Callable[[str], str],
     detail = job["analysis_detail"] or {}
     metadata = detail.get("metadata") or {}
 
-    # 편집 상태 - EDITED, NOT_EDITED, UNKNOWN, NONE
-    # UNKNOWN은 편집 여부를 알 수 없는 경우, NONE은 메타데이터가 없는 경우
+    # 편집 상태 - EDITED, NOT_EDITED, UNKNOWN, NO_METADATA
+    # UNKNOWN은 편집 여부를 알 수 없는 경우, NO_METADATA는 메타데이터가 없는 경우
     edit_status = job["edit_status"]
 
     if edit_status is not None:
         edit_status = edit_status.strip().upper().replace(" ", "_")
 
-        if edit_status not in ("EDITED", "NOT_EDITED", "UNKNOWN"):
+        if edit_status not in ("EDITED", "NOT_EDITED", "UNKNOWN", "NO_METADATA"):
             edit_status = "UNKNOWN"
 
     completed_at = job["completed_at"].astimezone(timezone.utc)
