@@ -218,3 +218,39 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Environment variables
+.env.*
+!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# AI model weights
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.safetensors
+
+# Training datasets
+datasets/
+
+# Training outputs
+runs/
+checkpoints/
+
+# Temporary analysis files
+uploads/
+outputs/
+heatmaps/
+temp/
+
+# Azure Machine Learning
+.azureml/
