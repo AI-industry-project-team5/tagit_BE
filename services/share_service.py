@@ -23,8 +23,8 @@ def _check_expiry(expires_at: datetime) -> None:
         raise ShareError(410, "DATA_EXPIRED", "공유 링크가 만료되었습니다.")
 
 
-# 공유 링크 발급
-def create_share(job_id: UUID, db: Connection, frontend_url: str) -> dict:
+# 분석 결과 공유 링크 발급
+def create_analysis_share(job_id: UUID, db: Connection, frontend_url: str) -> dict:
     with db.transaction(), db.cursor(row_factory=dict_row) as cursor:
         # 동시 발급 요청 시 같은 분석 행 잠금
         cursor.execute(
@@ -68,7 +68,7 @@ def create_share(job_id: UUID, db: Connection, frontend_url: str) -> dict:
     return {
         "success": True,
         "data": {
-            "shareUrl": f"{frontend_url.rstrip('/')}/share/{job_id}",
+            "shareUrl": f"{frontend_url.rstrip('/')}/share/analysis/{job_id}",
             "expiresAt": expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
     }
@@ -154,3 +154,47 @@ def get_share(job_id: UUID, db: Connection, make_read_url: Callable[[str], str],
             },
         },
     }
+
+# 유사 이미지 검색 결과 공유 링크 발급
+def create_search_share(job_id: UUID, db: Connection, frontend_url: str) -> dict:
+    with db.transaction(), db.cursor(row_factory=dict_row) as cursor:
+        cursor.execute("""
+            UPDATE search_jobs
+            SET share_expires_at = COALESCE(share_expires_at, date_trunc('second', NOW()) + interval '168 hours')
+            WHERE job_id = %s AND status = 'COMPLETED'
+            RETURNING share_expires_at
+        """, (job_id,))
+        row = cursor.fetchone()
+        if row is None:
+            raise ShareError(404, "DATA_NOT_FOUND", "완료된 검색 결과가 없습니다.")
+        expires_at = row["share_expires_at"]
+        _check_expiry(expires_at)
+    return {"success": True, "data": {
+        "shareUrl": f"{frontend_url.rstrip('/')}/share/search/{job_id}",
+        "expiresAt": expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }}
+
+# 공유된 이미지 검색 결과 조회
+def get_search_share(job_id: UUID, db: Connection, make_read_url: Callable) -> dict:
+    with db.cursor(row_factory=dict_row) as cursor:
+        cursor.execute("""
+            SELECT share_expires_at, original_blob_name, completed_at, search_result,
+                   exact_images_count, similar_images_count
+            FROM search_jobs WHERE job_id = %s AND status = 'COMPLETED'
+                AND share_expires_at IS NOT NULL
+        """, (job_id,))
+        row = cursor.fetchone()
+    if row is None:
+        raise ShareError(404, "DATA_NOT_FOUND", "공유 링크를 찾을 수 없습니다.")
+    expires_at = row["share_expires_at"]
+    _check_expiry(expires_at)
+    result = row["search_result"]
+    data = result.get("data", result)
+    return {"success": True, "data": {
+        "completedAt": row["completed_at"].astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "imageUrl": make_read_url(row["original_blob_name"], expires_at=expires_at),
+        "exactMatchesCount": row["exact_images_count"],
+        "visualMatchesCount": row["similar_images_count"],
+        "exactMatches": data["exactMatches"],
+        "visualMatches": data["visualMatches"],
+    }}

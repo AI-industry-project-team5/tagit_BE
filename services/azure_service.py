@@ -118,6 +118,8 @@ class AzureOcrService:
         return "\n".join(extracted_text_lines)
 
 # 3. 메모 분류 클래스 
+
+# CV에서 fake 태그 맞는지 확인 필요!!!!!!!!!
 class AzureMemoClassifier:
     """Azure Custom Vision Image Classification을 사용하여 메모 이미지의 real/fake 여부를 판별하는 클래스"""
     def __init__(self):

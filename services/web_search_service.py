@@ -21,12 +21,7 @@ class SerpApiLensService:
             )
         self.timeout = timeout
 
-    def search_lens_data(
-        self,
-        sas_url: str,
-        hl: str = "ko",
-        gl: str = "kr",
-    ) -> dict:
+    def search_lens_data(self, sas_url: str, hl: str = "ko", gl: str = "kr", *, search_type: str = "all",) -> dict:
         """
         [API 호출] Azure Blob Storage SAS URL을 SerpApi Google Lens(engine=google_lens)의
         url 파라미터로 전달해 원본 검색 응답을 받아옵니다.
