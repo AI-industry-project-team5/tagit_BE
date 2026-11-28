@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Body
 from pydantic import BaseModel
-from services.share_service import ShareError, create_anaylsis_share, get_share, create_search_share, get_search_share
+from services.share_service import ShareError, create_analysis_share, get_share, create_search_share, get_search_share
 from .router_support import (
     open_db, required_env, make_read_url, normalize_edit, parse_job_id,
     error_response, not_found, internal_error, ContractRoute,
@@ -23,7 +23,7 @@ def create_share_link(body: ShareRequest | None = Body(default=None)):
         return not_found()
     try:
         with open_db() as db:
-            return create_anaylsis_share(job_id, db, required_env('FRONTEND_URL'))
+            return create_analysis_share(job_id, db, required_env('FRONTEND_URL'))
     except ShareError as exc:
         return error_response(exc.status_code, exc.body['error_code'], exc.body['message'])
     except Exception:
