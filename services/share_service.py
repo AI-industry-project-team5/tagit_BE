@@ -195,6 +195,6 @@ def get_search_share(job_id: UUID, db: Connection, make_read_url: Callable) -> d
         "imageUrl": make_read_url(row["original_blob_name"], expires_at=expires_at),
         "exactMatchesCount": row["exact_images_count"],
         "visualMatchesCount": row["similar_images_count"],
-        "exactMatches": data["exactMatches"],
-        "visualMatches": data["visualMatches"],
+        "exactMatches": data["exactImages"],
+        "visualMatches": data["similarImages"],
     }}
